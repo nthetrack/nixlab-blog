@@ -286,10 +286,262 @@
     }
   }
 
+  function mountBeamGridBuilder(figure) {
+    var shell = figure.querySelector(".interactive-shell");
+    if (!shell || shell.dataset.mounted === "true") {
+      return;
+    }
+    shell.dataset.mounted = "true";
+
+    shell.innerHTML = "";
+
+    var root = createEl("div", "lidar-grid");
+    var canvasWrap = createEl("div", "lidar-grid__canvas-wrap");
+    var canvas = createEl("canvas", "lidar-grid__canvas");
+    canvas.setAttribute("aria-hidden", "true");
+    canvasWrap.appendChild(canvas);
+
+    var controls = createEl("div", "lidar-grid__controls");
+    var controlsHeader = createEl("div", "lidar-grid__controls-title", "Sampling Controls");
+
+    var channelsLabel = createEl("label", "lidar-grid__label", "Channels (vertical beams)");
+    var channelsValue = createEl("output", "lidar-grid__value", "");
+    var channels = createEl("input", "lidar-grid__slider");
+    channels.type = "range";
+    channels.min = "8";
+    channels.max = "128";
+    channels.step = "1";
+    channels.value = "32";
+    channels.setAttribute("aria-label", "Channel count");
+
+    var azLabel = createEl("label", "lidar-grid__label", "Azimuth step (degrees)");
+    var azValue = createEl("output", "lidar-grid__value", "");
+    var azimuth = createEl("input", "lidar-grid__slider");
+    azimuth.type = "range";
+    azimuth.min = "0.05";
+    azimuth.max = "1.00";
+    azimuth.step = "0.05";
+    azimuth.value = "0.20";
+    azimuth.setAttribute("aria-label", "Azimuth step size in degrees");
+
+    var hzLabel = createEl("label", "lidar-grid__label", "Scan rate (Hz)");
+    var hzValue = createEl("output", "lidar-grid__value", "");
+    var scanRate = createEl("input", "lidar-grid__slider");
+    scanRate.type = "range";
+    scanRate.min = "5";
+    scanRate.max = "20";
+    scanRate.step = "1";
+    scanRate.value = "10";
+    scanRate.setAttribute("aria-label", "Scan rate in hertz");
+
+    var btnRow = createEl("div", "lidar-grid__buttons");
+    var resetBtn = createEl("button", "lidar-grid__button lidar-grid__button--ghost", "Reset");
+    resetBtn.type = "button";
+    var denseBtn = createEl("button", "lidar-grid__button", "Dense preset");
+    denseBtn.type = "button";
+    var sparseBtn = createEl("button", "lidar-grid__button", "Sparse preset");
+    sparseBtn.type = "button";
+    btnRow.append(resetBtn, denseBtn, sparseBtn);
+
+    var readout = createEl("div", "lidar-grid__readout");
+    readout.setAttribute("aria-live", "polite");
+
+    function controlRow(labelEl, valueEl, inputEl) {
+      var row = createEl("div", "lidar-grid__row");
+      var top = createEl("div", "lidar-grid__label-row");
+      top.append(labelEl, valueEl);
+      row.append(top, inputEl);
+      return row;
+    }
+
+    controls.append(
+      controlsHeader,
+      controlRow(channelsLabel, channelsValue, channels),
+      controlRow(azLabel, azValue, azimuth),
+      controlRow(hzLabel, hzValue, scanRate),
+      btnRow,
+      readout
+    );
+
+    root.append(canvasWrap, controls);
+    shell.appendChild(root);
+
+    var ctx = canvas.getContext("2d");
+    var state = {
+      channels: 32,
+      azimuthStepDeg: 0.2,
+      scanRateHz: 10
+    };
+
+    function totalAzimuthBins(stepDeg) {
+      return Math.max(1, Math.round(360 / stepDeg));
+    }
+
+    function pointsPerFrame() {
+      return state.channels * totalAzimuthBins(state.azimuthStepDeg);
+    }
+
+    function pointsPerSecond() {
+      return pointsPerFrame() * state.scanRateHz;
+    }
+
+    function draw() {
+      var w = canvas.clientWidth;
+      var h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0b1218";
+      ctx.fillRect(0, 0, w, h);
+
+      var centerX = w * 0.34;
+      var centerY = h * 0.52;
+      var radius = Math.min(w * 0.28, h * 0.38);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      var rings = 4;
+      for (var r = 1; r < rings; r += 1) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (radius * r) / rings, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      var displayedChannels = clamp(state.channels, 2, 32);
+      var stepRad = (state.azimuthStepDeg * Math.PI) / 180;
+      var azimuthBins = totalAzimuthBins(state.azimuthStepDeg);
+      var displayBins = clamp(Math.round(azimuthBins / 18), 8, 96);
+
+      for (var c = 0; c < displayedChannels; c += 1) {
+        var yOffset = ((c / (displayedChannels - 1 || 1)) - 0.5) * (radius * 0.55);
+        for (var b = 0; b < displayBins; b += 1) {
+          var a = b * stepRad * (azimuthBins / displayBins);
+          var px = centerX + Math.cos(a) * (radius + yOffset * 0.1);
+          var py = centerY + Math.sin(a) * (radius + yOffset * 0.1) + yOffset;
+          ctx.fillStyle = "rgba(0,198,255,0.82)";
+          ctx.fillRect(px, py, 1.8, 1.8);
+        }
+      }
+
+      var barLeft = w * 0.67;
+      var barTop = h * 0.24;
+      var barW = w * 0.22;
+      var barH = 16;
+
+      var pps = pointsPerSecond();
+      var ppsNorm = clamp(pps / 1200000, 0, 1);
+
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fillRect(barLeft, barTop, barW, barH);
+      ctx.fillStyle = "rgba(0,198,255,0.95)";
+      ctx.fillRect(barLeft, barTop, barW * ppsNorm, barH);
+      ctx.strokeStyle = "rgba(255,255,255,0.3)";
+      ctx.strokeRect(barLeft, barTop, barW, barH);
+
+      ctx.fillStyle = "#d4d4d4";
+      ctx.font = "12px Segoe UI, sans-serif";
+      ctx.fillText("Relative point throughput", barLeft, barTop - 8);
+      ctx.fillStyle = "rgba(212, 212, 212, 0.75)";
+      ctx.fillText("Polar sample map (illustrative)", centerX - 58, h - 14);
+    }
+
+    function resizeCanvas() {
+      var ratio = Math.min(window.devicePixelRatio || 1, 2);
+      var width = Math.max(320, canvasWrap.clientWidth);
+      var height = 260;
+      canvas.width = Math.floor(width * ratio);
+      canvas.height = Math.floor(height * ratio);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      draw();
+    }
+
+    function updateReadout() {
+      channelsValue.value = String(state.channels);
+      azValue.value = formatNumber(state.azimuthStepDeg, 2) + " deg";
+      hzValue.value = String(state.scanRateHz) + " Hz";
+
+      var azBins = totalAzimuthBins(state.azimuthStepDeg);
+      var frame = pointsPerFrame();
+      var second = pointsPerSecond();
+      var spacingAt50m = (50 * state.azimuthStepDeg * Math.PI) / 180;
+
+      readout.innerHTML =
+        "<div><strong>Azimuth bins per revolution:</strong> " + formatNumber(azBins, 0) + "</div>" +
+        "<div><strong>Points per revolution:</strong> " + formatNumber(frame, 0) + "</div>" +
+        "<div><strong>Points per second:</strong> " + formatNumber(second, 0) + "</div>" +
+        "<div><strong>Lateral spacing at 50 m:</strong> ~" + formatNumber(spacingAt50m, 2) + " m between rays</div>";
+      draw();
+    }
+
+    function setState(next) {
+      state.channels = clamp(Number(next.channels), 8, 128);
+      state.azimuthStepDeg = clamp(Number(next.azimuthStepDeg), 0.05, 1);
+      state.scanRateHz = clamp(Number(next.scanRateHz), 5, 20);
+      channels.value = String(state.channels);
+      azimuth.value = String(state.azimuthStepDeg);
+      scanRate.value = String(state.scanRateHz);
+      updateReadout();
+    }
+
+    channels.addEventListener("input", function () {
+      setState({
+        channels: channels.value,
+        azimuthStepDeg: state.azimuthStepDeg,
+        scanRateHz: state.scanRateHz
+      });
+    });
+
+    azimuth.addEventListener("input", function () {
+      setState({
+        channels: state.channels,
+        azimuthStepDeg: azimuth.value,
+        scanRateHz: state.scanRateHz
+      });
+    });
+
+    scanRate.addEventListener("input", function () {
+      setState({
+        channels: state.channels,
+        azimuthStepDeg: state.azimuthStepDeg,
+        scanRateHz: scanRate.value
+      });
+    });
+
+    resetBtn.addEventListener("click", function () {
+      setState({ channels: 32, azimuthStepDeg: 0.2, scanRateHz: 10 });
+    });
+
+    denseBtn.addEventListener("click", function () {
+      setState({ channels: 64, azimuthStepDeg: 0.1, scanRateHz: 15 });
+    });
+
+    sparseBtn.addEventListener("click", function () {
+      setState({ channels: 16, azimuthStepDeg: 0.8, scanRateHz: 8 });
+    });
+
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(resizeCanvas);
+      observer.observe(canvasWrap);
+    } else {
+      window.addEventListener("resize", resizeCanvas);
+    }
+
+    setState({ channels: 32, azimuthStepDeg: 0.2, scanRateHz: 10 });
+    resizeCanvas();
+  }
+
   function mountInteractives() {
     var figure = document.getElementById("tof-roundtrip-basics");
     if (figure) {
       mountRoundTripTimer(figure);
+    }
+    var gridFigure = document.getElementById("scan-azimuth-elevation-grid");
+    if (gridFigure) {
+      mountBeamGridBuilder(gridFigure);
     }
   }
 
