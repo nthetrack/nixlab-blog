@@ -43,3 +43,8 @@ theme = "hugo-theme-terminal"
       identifier = "portfolio"
       name = "Portfolio"
       url = "https://nixlab.online"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
