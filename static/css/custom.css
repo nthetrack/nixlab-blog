@@ -1,0 +1,25 @@
+:root {
+  --accent: #00c6ff;
+  --background: #0f0f0f;
+  --color: #d4d4d4;
+}
+
+body {
+  background: var(--background);
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  color: #0072ff;
+}
+
+.logo a {
+  color: var(--accent);
+}
+
+footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
