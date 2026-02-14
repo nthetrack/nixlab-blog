@@ -534,6 +534,239 @@
     resizeCanvas();
   }
 
+  function mountCoverageResolution(figure) {
+    var shell = figure.querySelector(".interactive-shell");
+    if (!shell || shell.dataset.mounted === "true") {
+      return;
+    }
+    shell.dataset.mounted = "true";
+    shell.innerHTML = "";
+
+    var root = createEl("div", "lidar-cov");
+    var canvasWrap = createEl("div", "lidar-cov__canvas-wrap");
+    var canvas = createEl("canvas", "lidar-cov__canvas");
+    canvas.setAttribute("aria-hidden", "true");
+    canvasWrap.appendChild(canvas);
+
+    var controls = createEl("div", "lidar-cov__controls");
+    var readout = createEl("div", "lidar-cov__readout");
+    readout.setAttribute("aria-live", "polite");
+
+    function makeControl(label, min, max, step, value, aria) {
+      var row = createEl("div", "lidar-cov__row");
+      var top = createEl("div", "lidar-cov__label-row");
+      var lbl = createEl("label", "lidar-cov__label", label);
+      var out = createEl("output", "lidar-cov__value", "");
+      var input = createEl("input", "lidar-cov__slider");
+      input.type = "range";
+      input.min = String(min);
+      input.max = String(max);
+      input.step = String(step);
+      input.value = String(value);
+      input.setAttribute("aria-label", aria);
+      top.append(lbl, out);
+      row.append(top, input);
+      return { row: row, input: input, out: out };
+    }
+
+    var fovCtl = makeControl("Horizontal FOV (deg)", 20, 140, 1, 90, "Horizontal field of view in degrees");
+    var stepCtl = makeControl("Angular step (deg)", 0.05, 1.5, 0.05, 0.35, "Angular step in degrees");
+    var distCtl = makeControl("Object distance (m)", 10, 160, 1, 80, "Object distance in meters");
+    var widthCtl = makeControl("Object width (m)", 0.1, 6, 0.1, 1.2, "Object width in meters");
+
+    var btnRow = createEl("div", "lidar-cov__buttons");
+    var resetBtn = createEl("button", "lidar-cov__button lidar-cov__button--ghost", "Reset");
+    resetBtn.type = "button";
+    var coarseBtn = createEl("button", "lidar-cov__button", "Coarse example");
+    coarseBtn.type = "button";
+    var fineBtn = createEl("button", "lidar-cov__button", "Fine example");
+    fineBtn.type = "button";
+    btnRow.append(resetBtn, coarseBtn, fineBtn);
+
+    controls.append(fovCtl.row, stepCtl.row, distCtl.row, widthCtl.row, btnRow, readout);
+    root.append(canvasWrap, controls);
+    shell.appendChild(root);
+
+    var ctx = canvas.getContext("2d");
+    var state = {
+      fovDeg: 90,
+      stepDeg: 0.35,
+      distanceM: 80,
+      widthM: 1.2
+    };
+
+    function visibleWidthAtDistance(distanceM, fovDeg) {
+      return 2 * distanceM * Math.tan((fovDeg * Math.PI) / 360);
+    }
+
+    function raySpacingAtDistance(distanceM, stepDeg) {
+      return 2 * distanceM * Math.tan((stepDeg * Math.PI) / 360);
+    }
+
+    function drawScene(x, y, w, h, sparseMode) {
+      ctx.fillStyle = "#0b1218";
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.strokeRect(x, y, w, h);
+
+      var sx = x + w * 0.14;
+      var sy = y + h * 0.52;
+      var tx = x + w * 0.85;
+
+      // Sensor
+      ctx.fillStyle = "#00c6ff";
+      ctx.beginPath();
+      ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Object width mapped to panel scale.
+      var span = visibleWidthAtDistance(state.distanceM, state.fovDeg);
+      var pxPerMeter = (w * 0.68) / Math.max(span, 0.001);
+      var objPx = Math.max(2, state.widthM * pxPerMeter);
+      var objH = 36;
+      var objLeft = tx - objPx / 2;
+      var objTop = sy - objH / 2;
+      ctx.fillStyle = "rgba(255,170,64,0.88)";
+      ctx.fillRect(objLeft, objTop, objPx, objH);
+
+      // Rays
+      var rawBins = Math.floor(state.fovDeg / state.stepDeg) + 1;
+      var drawBins = sparseMode ? Math.min(rawBins, 140) : Math.min(rawBins * 2, 260);
+      var start = -state.fovDeg / 2;
+      var step = state.fovDeg / Math.max(drawBins - 1, 1);
+      var hits = 0;
+
+      for (var i = 0; i < drawBins; i += 1) {
+        var a = (start + i * step) * (Math.PI / 180);
+        var ex = sx + Math.cos(a) * (w * 0.75);
+        var ey = sy + Math.sin(a) * (h * 0.45);
+
+        // Intersect with target plane at tx
+        var t = (tx - sx) / Math.max(ex - sx, 1e-6);
+        if (t > 0 && t <= 1.6) {
+          var iy = sy + (ey - sy) * t;
+          var hit = iy >= objTop && iy <= objTop + objH;
+          if (hit) {
+            hits += 1;
+            ctx.strokeStyle = "rgba(0,198,255,0.9)";
+            ctx.lineWidth = 1.4;
+          } else {
+            ctx.strokeStyle = "rgba(255,255,255,0.16)";
+            ctx.lineWidth = 1;
+          }
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(tx, iy);
+          ctx.stroke();
+        }
+      }
+
+      ctx.fillStyle = "#d4d4d4";
+      ctx.font = "11px Segoe UI, sans-serif";
+      ctx.fillText(sparseMode ? "Coarse sampling view" : "Finer sampling view", x + 10, y + 16);
+
+      var label = hits > 0 ? hits + " ray hit(s)" : "no hits";
+      ctx.fillStyle = hits > 0 ? "#79e8ff" : "#ff9a9a";
+      ctx.fillText(label, x + 10, y + h - 10);
+      return hits;
+    }
+
+    function draw() {
+      var w = canvas.clientWidth;
+      var h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0a1016";
+      ctx.fillRect(0, 0, w, h);
+
+      var gap = 10;
+      var paneW = (w - gap * 3) / 2;
+      var paneH = h - 20;
+      var leftHits = drawScene(gap, 10, paneW, paneH, true);
+      var rightHits = drawScene(gap * 2 + paneW, 10, paneW, paneH, false);
+
+      return { leftHits: leftHits, rightHits: rightHits };
+    }
+
+    function resizeCanvas() {
+      var ratio = Math.min(window.devicePixelRatio || 1, 2);
+      var width = Math.max(320, canvasWrap.clientWidth);
+      var height = 240;
+      canvas.width = Math.floor(width * ratio);
+      canvas.height = Math.floor(height * ratio);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      update();
+    }
+
+    function updateControls() {
+      fovCtl.out.value = formatNumber(state.fovDeg, 0) + " deg";
+      stepCtl.out.value = formatNumber(state.stepDeg, 2) + " deg";
+      distCtl.out.value = formatNumber(state.distanceM, 0) + " m";
+      widthCtl.out.value = formatNumber(state.widthM, 1) + " m";
+      fovCtl.input.value = String(state.fovDeg);
+      stepCtl.input.value = String(state.stepDeg);
+      distCtl.input.value = String(state.distanceM);
+      widthCtl.input.value = String(state.widthM);
+    }
+
+    function setState(next) {
+      state.fovDeg = clamp(Number(next.fovDeg), 20, 140);
+      state.stepDeg = clamp(Number(next.stepDeg), 0.05, 1.5);
+      state.distanceM = clamp(Number(next.distanceM), 10, 160);
+      state.widthM = clamp(Number(next.widthM), 0.1, 6);
+      updateControls();
+      update();
+    }
+
+    function update() {
+      var hits = draw();
+      var spacing = raySpacingAtDistance(state.distanceM, state.stepDeg);
+      var bins = Math.floor(state.fovDeg / state.stepDeg) + 1;
+      var likelyMiss = spacing > state.widthM;
+      readout.innerHTML =
+        "<div><strong>Horizontal bins:</strong> " + formatNumber(bins, 0) + "</div>" +
+        "<div><strong>Ray spacing at " + formatNumber(state.distanceM, 0) + " m:</strong> ~" + formatNumber(spacing, 2) + " m</div>" +
+        "<div><strong>Object width:</strong> " + formatNumber(state.widthM, 2) + " m</div>" +
+        "<div><strong>Hit test:</strong> " +
+        (likelyMiss && hits.leftHits === 0 ? "<span class=\"lidar-cov__warn\">Likely to drop between rays at coarse sampling.</span>" : "Object sampled by at least one ray.") +
+        "</div>";
+    }
+
+    fovCtl.input.addEventListener("input", function () {
+      setState({ fovDeg: fovCtl.input.value, stepDeg: state.stepDeg, distanceM: state.distanceM, widthM: state.widthM });
+    });
+    stepCtl.input.addEventListener("input", function () {
+      setState({ fovDeg: state.fovDeg, stepDeg: stepCtl.input.value, distanceM: state.distanceM, widthM: state.widthM });
+    });
+    distCtl.input.addEventListener("input", function () {
+      setState({ fovDeg: state.fovDeg, stepDeg: state.stepDeg, distanceM: distCtl.input.value, widthM: state.widthM });
+    });
+    widthCtl.input.addEventListener("input", function () {
+      setState({ fovDeg: state.fovDeg, stepDeg: state.stepDeg, distanceM: state.distanceM, widthM: widthCtl.input.value });
+    });
+
+    resetBtn.addEventListener("click", function () {
+      setState({ fovDeg: 90, stepDeg: 0.35, distanceM: 80, widthM: 1.2 });
+    });
+    coarseBtn.addEventListener("click", function () {
+      setState({ fovDeg: 120, stepDeg: 1.0, distanceM: 100, widthM: 0.8 });
+    });
+    fineBtn.addEventListener("click", function () {
+      setState({ fovDeg: 90, stepDeg: 0.1, distanceM: 100, widthM: 0.8 });
+    });
+
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(resizeCanvas);
+      observer.observe(canvasWrap);
+    } else {
+      window.addEventListener("resize", resizeCanvas);
+    }
+
+    setState({ fovDeg: 90, stepDeg: 0.35, distanceM: 80, widthM: 1.2 });
+    resizeCanvas();
+  }
+
   function mountInteractives() {
     var figure = document.getElementById("tof-roundtrip-basics");
     if (figure) {
@@ -542,6 +775,10 @@
     var gridFigure = document.getElementById("scan-azimuth-elevation-grid");
     if (gridFigure) {
       mountBeamGridBuilder(gridFigure);
+    }
+    var covFigure = document.getElementById("fov-coverage-tradeoff");
+    if (covFigure) {
+      mountCoverageResolution(covFigure);
     }
   }
 
