@@ -1,11 +1,11 @@
-﻿---
+---
 title: "Ultrasound: Seeing with Sound"
-date: 2026-02-26
+date: 2026-02-25
 draft: false
 tags: ["physics", "medical", "interactive"]
 ---
 
-We are all familiar with the ritual: the cold, translucent blue gel, the dimming of the lights, and the rhythmic *whoosh-whoosh* of a hidden heart. For most, the word "ultrasound" evokes a specific, grainy imagery:the first black-and-white silhouette of a child, destined for a refrigerator door.
+We are all familiar with the ritual: the cold, translucent blue gel, the dimming of the lights, and the rhythmic *whoosh-whoosh* of a hidden heart. For most, the word "ultrasound" evokes a specific, grainy imagery: the first black-and-white silhouette of a child, destined for a refrigerator door.
 
 But to view ultrasound merely as a digital scrapbook tool is to miss one of the most elegant intersections of physics and human necessity. Beneath the mundane surface of a prenatal check-up lies a high-stakes game of *Marco Polo* played with the very fabric of our internal organs. 
 
@@ -18,7 +18,7 @@ Before we can see with sound, we need to understand how it moves. Unlike light, 
 Play with the frequency (pitch) and amplitude (loudness) below to see how these longitudinal waves propagate through a medium.
 
 <div class="widget-box">
-  <h3><span style="font-size: 1.4rem">〰️</span> Wave Propagation</h3>
+  <h3><span style="font-size: 1.4rem">??</span> Wave Propagation</h3>
   <canvas id="waveCanvas" class="widget-canvas" width="800" height="200"></canvas>
   <div class="widget-controls">
     <div class="widget-slider-group">
@@ -40,7 +40,7 @@ So how do we generate sound waves that fast? In the 1880s, Pierre and Jacques Cu
 Even more magically, the effect is reversible. If you zap the crystal with electricity, it physically changes shape. The modern ultrasound probe is essentially a sophisticated crystal-squeezer. It rapidly pulses electricity to vibrate the crystals (creating sound), then stays silent to listen for echoes which squeeze the crystals back (creating electricity). 
 
 <div class="widget-box">
-  <h3><span style="font-size: 1.4rem">⚡</span> The Piezoelectric Crystal</h3>
+  <h3><span style="font-size: 1.4rem">?</span> The Piezoelectric Crystal</h3>
   <canvas id="piezoCanvas" class="widget-canvas" width="800" height="250"></canvas>
   <div class="widget-controls">
     <button id="btnSqueeze" class="widget-btn">Squeeze Crystal (Generate Voltage)</button>
@@ -60,7 +60,7 @@ $$ \text{Distance} = \frac{\text{Velocity} \times \text{Time}}{2} $$
 *(We divide by 2 because the sound had to travel there and back!)*
 
 <div class="widget-box">
-  <h3><span style="font-size: 1.4rem">⏱️</span> Pulse-Echo Ranging</h3>
+  <h3><span style="font-size: 1.4rem">??</span> Pulse-Echo Ranging</h3>
   <canvas id="tofCanvas" class="widget-canvas" width="800" height="250"></canvas>
   <div class="widget-controls">
     <button id="btnPulse" class="widget-btn">Fire Acoustic Pulse</button>
@@ -81,7 +81,7 @@ The strength of the returning echo determines the brightness (**B-mode**, or Bri
 **Try it yourself:** Drag the virtual probe left and right across the "tissue" below to map out the hidden shape using sound.
 
 <div class="widget-box">
-  <h3><span style="font-size: 1.4rem">🖼️</span> B-Mode Array Sweep</h3>
+  <h3><span style="font-size: 1.4rem">???</span> B-Mode Array Sweep</h3>
   <canvas id="bmodeCanvas" class="widget-canvas" width="800" height="300" style="cursor: grab;"></canvas>
   <div class="widget-controls">
     <span style="font-size: 0.95rem; font-weight: 500; color: #2b3138;">&larr; Drag the cyan probe horizontally &rarr;</span>
