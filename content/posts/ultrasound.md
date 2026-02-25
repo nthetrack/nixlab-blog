@@ -1,7 +1,7 @@
 ---
 title: "Ultrasound: Seeing with Sound"
 author: "Nik Palmer"
-date: "2026-02-26"
+date: "2026-02-25"
 tags: ["ultrasound","physics","medical-imaging","signal-processing","acoustics","interactive"]
 draft: false
 ---
