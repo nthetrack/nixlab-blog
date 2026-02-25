@@ -1,11 +1,11 @@
----
+﻿---
 title: "Ultrasound: Seeing with Sound"
 date: 2026-02-26
 draft: false
 tags: ["physics", "medical", "interactive"]
 ---
 
-We are all familiar with the ritual: the cold, translucent blue gel, the dimming of the lights, and the rhythmic *whoosh-whoosh* of a hidden heart. For most, the word "ultrasound" evokes a specific, grainy imagery—the first black-and-white silhouette of a child, destined for a refrigerator door.
+We are all familiar with the ritual: the cold, translucent blue gel, the dimming of the lights, and the rhythmic *whoosh-whoosh* of a hidden heart. For most, the word "ultrasound" evokes a specific, grainy imagery:the first black-and-white silhouette of a child, destined for a refrigerator door.
 
 But to view ultrasound merely as a digital scrapbook tool is to miss one of the most elegant intersections of physics and human necessity. Beneath the mundane surface of a prenatal check-up lies a high-stakes game of *Marco Polo* played with the very fabric of our internal organs. 
 
@@ -13,7 +13,7 @@ Let's break down how we actually *see* with sound, step by step.
 
 ## 1. What Even is Sound?
 
-Before we can see with sound, we need to understand how it moves. Unlike light, which can travel through the vacuum of space, sound requires a medium. It is a **mechanical wave**—a chain reaction of particles bumping into one another, creating zones of compression (high pressure) and rarefaction (low pressure).
+Before we can see with sound, we need to understand how it moves. Unlike light, which can travel through the vacuum of space, sound requires a medium. It is a **mechanical wave**:a chain reaction of particles bumping into one another, creating zones of compression (high pressure) and rarefaction (low pressure).
 
 Play with the frequency (pitch) and amplitude (loudness) below to see how these longitudinal waves propagate through a medium.
 
@@ -30,7 +30,7 @@ Play with the frequency (pitch) and amplitude (loudness) below to see how these 
       <input type="range" id="ampSlider" min="0.1" max="1" step="0.1" value="0.6">
     </div>
   </div>
-  <div class="widget-desc">Notice how higher frequencies mean the waves are packed closer together (a shorter wavelength). Medical ultrasound uses frequencies between 2 and 15 MHz—millions of cycles per second, way beyond human hearing!</div>
+  <div class="widget-desc">Notice how higher frequencies mean the waves are packed closer together (a shorter wavelength). Medical ultrasound uses frequencies between 2 and 15 MHz:millions of cycles per second, way beyond human hearing!</div>
 </div>
 
 ## 2. The Crystal Squeezer: Piezoelectricity
@@ -51,7 +51,7 @@ Even more magically, the effect is reversible. If you zap the crystal with elect
 
 ## 3. Echolocation: Time of Flight
 
-When these high-frequency sound waves travel through the body, they bounce off the boundaries between different tissue densities—the soft yielding of fat versus the stubborn resistance of bone or organ walls. 
+When these high-frequency sound waves travel through the body, they bounce off the boundaries between different tissue densities:the soft yielding of fat versus the stubborn resistance of bone or organ walls. 
 
 By measuring exactly how long it takes for the echo to return (**Time of Flight**), and knowing the average speed of sound in human tissue (about $1540 \text{ m/s}$), the computer calculates exactly how deep the boundary is using a simple formula: 
 
@@ -93,9 +93,9 @@ The strength of the returning echo determines the brightness (**B-mode**, or Bri
 
 This technology, originally developed as SONAR to hunt submarines during World War I, has become the ultimate diagnostic light. We are now entering the era of **POCUS** (Point-of-Care Ultrasound), where doctors are ditching the stethoscope for pocket-sized scanners that plug directly into an iPhone.
 
-Even more radical is **HIFU** (High-Intensity Focused Ultrasound). By concentrating sound waves with pinpoint precision, doctors can generate enough heat to "burn" away uterine fibroids or prostate tumors without a single incision. It is surgery performed entirely by vibration—a bloodless, bladeless revolution.
+Even more radical is **HIFU** (High-Intensity Focused Ultrasound). By concentrating sound waves with pinpoint precision, doctors can generate enough heat to "burn" away uterine fibroids or prostate tumors without a single incision. It is surgery performed entirely by vibration:a bloodless, bladeless revolution.
 
-Next time you see that streak of blue gel, look past the "baby's first photo." You are witnessing 140 years of evolution—from the Curies' vibrating crystals to submarine hunters—refined into a tool that can heal without wounding.
+Next time you see that streak of blue gel, look past the "baby's first photo." You are witnessing 140 years of evolution, from the Curies' vibrating crystals to submarine hunters, refined into a tool that can heal without wounding.
 
 ---
 
