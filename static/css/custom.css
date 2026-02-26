@@ -28,6 +28,16 @@ h1, h2, h3, h4, h5, h6 {
   color: #3a4149;
 }
 
+/* Post Metadata Contrast */
+.post-meta, .post-date, .post-author {
+  color: #5e6b7a !important; /* Darker charcoal for readability */
+}
+
+.post-tags a {
+  color: var(--accent) !important;
+  font-weight: 500;
+}
+
 a {
   color: var(--accent);
   text-decoration: none;
@@ -48,7 +58,38 @@ footer {
   color: var(--color-muted);
 }
 
-/* Post Cards (Overrides for terminal theme list) */
+/* Table Readability Fix */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 1rem;
+  display: block;
+  overflow-x: auto;
+}
+
+th {
+  background: var(--accent);
+  color: #fff !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 12px 15px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--color);
+}
+
+tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Post Cards Clickable Overhaul */
 .post.on-list {
   position: relative;
   background: var(--bg-offset);
@@ -58,7 +99,6 @@ footer {
   margin-bottom: 1.5rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.02);
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  cursor: pointer;
 }
 
 .post.on-list:hover {
@@ -67,16 +107,20 @@ footer {
   box-shadow: 0 8px 24px rgba(0, 198, 255, 0.1);
 }
 
+/* Make whole card clickable by stretching the title link */
+.post.on-list .post-title a::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
 .post.on-list .post-title a {
   color: #111418;
   text-decoration: none;
-}
-
-.post.on-list .post-title a::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
 }
 
 .post.on-list::after {
@@ -89,7 +133,6 @@ footer {
   opacity: 0;
   transform: translateX(-5px);
   transition: opacity 0.2s, transform 0.2s;
-  pointer-events: none;
 }
 
 .post.on-list:hover::after {
